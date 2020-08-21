@@ -7,9 +7,89 @@ except Exception as _:
     from set_cover import *
 
 
+class RandInitializer:
+
+    RETRIES = 5
+
+    def __init__(self, problem_instance, time_budgets=None):
+        self.name = "random"
+        self.problem_instance = problem_instance
+        if time_budgets is None:
+            self.time_budgets = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9]
+        else:
+            self.time_budgets = time_budgets
+        number_of_sets = problem_instance.problem_instance.shape[0]
+        # get total execution time
+        sol_vector = np.ones(number_of_sets)
+        initial_sol = Solution(problem_instance, sol_vector)
+        cost = initial_sol.cost
+        self.time_budgets = list(map(lambda x: x * cost, self.time_budgets))
+        self.population = []
+
+    def draw_random_sol(self):
+        index = random.randint(0, self.problem_instance.problem_instance.shape[0] - 1)
+        cost = self.problem_instance.get_cost(index)
+        return index, cost
+
+    def get_sol_of_cost(self, budget):
+        total = 0
+        already = []
+        re = 0
+        while re < RandInitializer.RETRIES:
+            index, set_cost = self.draw_random_sol()
+            if index not in already and set_cost + total < budget:
+                already.append(index)
+                total += set_cost
+                re = 0
+            else:
+                re += 1
+        number_of_sets = self.problem_instance.problem_instance.shape[0]
+        sol_vector = np.zeros(number_of_sets)
+        initial_sol = Solution(self.problem_instance, sol_vector)
+        for index in already:
+            # initial_sol.set_vector[index] = 1
+            initial_sol.add_set(index)
+        return initial_sol
+
+    def get_random_cover(self):
+        number_of_sets = self.problem_instance.problem_instance.shape[0]
+        sol_vector = np.zeros(number_of_sets)
+        initial_sol = Solution(self.problem_instance, sol_vector)
+        while not initial_sol.is_feasible_solution():
+            index = random.randint(0, self.problem_instance.problem_instance.shape[0] - 1)
+            initial_sol.add_set(index)
+        return initial_sol
+
+    def save_pop_results(self):
+        pop = self.population
+        GCAISPopulation.convert_and_save("PARETO_FRONTIERS" + os.sep + self.logger.get_file_name(), self.problem_instance, pop)
+
+    def set_logging(self, logger):
+        self.logger = logger
+
+    def find_approximation(self):
+        print("start random selection")
+        iter_start = time.time()
+        for budget in self.time_budgets:
+            self.population.append(self.get_sol_of_cost(budget))
+        full_coverage = self.get_random_cover()
+        self.population.append(full_coverage)
+        iter_end = time.time()
+        self.logger.log_entry(0, full_coverage.cost, float(iter_end - iter_start), len(self.population))
+        self.save_pop_results()
+        print("finish random selection")
+        return full_coverage
+
+    def get_random_covers(self):
+        random_covers = []
+        for budget in self.time_budgets:
+            random_covers.append(self.get_sol_of_cost(budget))
+        return random_covers
+
+
 class GCAISPopulation:
 
-    def __init__(self, initial_sol, to_be_covered, border, keep=True):
+    def __init__(self, initial_sol, to_be_covered, border, keep=True, with_rand=False, cover_instance=None):
         self.table = {}
         self.to_be_covered = to_be_covered
         initial = initial_sol.covered
@@ -20,6 +100,12 @@ class GCAISPopulation:
         self.key_gen = self.get_key_generator()
         self.border = border
         self.keep = keep
+        self.with_rand = with_rand
+        if with_rand:
+            rand_selector = RandInitializer(cover_instance)
+            covers = rand_selector.get_random_covers()
+            for cover in covers:
+                self.try_insert(cover)
 
     def save_rough_info(self, path, cover_instance):
         to_be_saved = {}
@@ -91,6 +177,11 @@ class GCAISPopulation:
                 for sol in self.table[key]["sols"]:
                     has_feasible = has_feasible or sol.is_feasible
             assert has_feasible is True
+        if self.with_rand:
+            rand_selector = RandInitializer(new_prob_instance)
+            covers = rand_selector.get_random_covers()
+            for cover in covers:
+                self.try_insert(cover)
 
     def get_population_size(self):
         total = 0
