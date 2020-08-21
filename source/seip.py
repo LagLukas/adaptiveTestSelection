@@ -6,12 +6,10 @@ import time
 try:
     from source.set_cover import *
     from source.set_cover import Solution
-    from source.greedy import GreedyAlgorithm
     from source.gcais_population import GCAISPopulation
 except Exception as _:
     from set_cover import *
     from set_cover import Solution
-    from greedy import GreedyAlgorithm
     from gcais_population import GCAISPopulation
 
 
@@ -21,7 +19,6 @@ class SEIP:
         self.name = "SEIP"
         self.iterations = iterations
         self.problem = problem_instance
-        self.greedy_alg = GreedyAlgorithm(problem_instance)
         self.population = []
 
     def mu(self, sol):
@@ -76,8 +73,6 @@ class SEIP:
             if i % 10 == 0:
                 print_now()
                 print("finished " + str(i / self.iterations) + "percent of SEIP")
-        for sol in self.population:
-            self.greedy_alg.make_solution_feasible(sol)
         print("finished SEIP")
         feasible = list(filter(lambda x: x.is_feasible, self.population))
         self.save_pop_results()
