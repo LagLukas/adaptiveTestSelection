@@ -1,7 +1,11 @@
 try:
+    from source.population_initializer import PopulationCreator
+    from source.greedy import GreedyAlgorithm
     from source.set_cover import *
     from source.gcais_population import GCAISPopulation
 except Exception as _:
+    from population_initializer import PopulationCreator
+    from greedy import GreedyAlgorithm
     from set_cover import *
     from gcais_population import GCAISPopulation
 import numpy as np
@@ -15,17 +19,20 @@ import unittest
 
 class BoundedGCAIS:
 
-    def __init__(self, problem_instance, iterations, border, adaptive, joshi, del_entry=False):
+    def __init__(self, problem_instance, iterations, border, adaptive, joshi, with_rand=False):
         val_border = str(border) if border != sys.maxsize else "no_border"
-        self.del_entry = del_entry
+        self.del_entry = False
+        self.with_rand = with_rand
         if adaptive:
             self.name = "bounded_GCAIS_adaptive" + "_" + val_border
             if joshi:
                 self.name = "bounded_GCAIS_adaptive" + "_" + val_border + "_joshi"
-                if del_entry:
-                    self.name += "del_entry"
+                if with_rand:
+                    self.name += "_with_rand"
         else:
             self.name = "bounded_GCAIS" + "_" + val_border
+            if with_rand:
+                self.name += "_with_rand"
         self.problem_instance = problem_instance
         self.iterations = iterations
         self.border = border
@@ -33,7 +40,7 @@ class BoundedGCAIS:
         number_of_sets = self.problem_instance.problem_instance.shape[0]
         sol_vector = np.ones(number_of_sets)
         initial_sol = Solution(self.problem_instance, sol_vector)
-        self.population = GCAISPopulation(initial_sol, to_be_covered, border, not self.del_entry)
+        self.population = GCAISPopulation(initial_sol, to_be_covered, border, not self.del_entry, self.with_rand, problem_instance)
         self.iter = 0
         self.adapted = False
         self.adaptive = adaptive
@@ -306,4 +313,3 @@ class TestGCAIS(unittest.TestCase):
 
 if "__main__" == __name__:
     unittest.main()
-
