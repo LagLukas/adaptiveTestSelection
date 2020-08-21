@@ -70,14 +70,19 @@ class AdaptiveExperiment:
     TIME_BUDGETS = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9]
 
     ALGORITHMS = [
-        lambda sci: BoundedGCAIS(sci, 5000, 200, True, True, True),
+        lambda sci: BoundedGCAIS(sci, 5000, 200, False, False, True),
+        # lambda sci: RandomSelector(sci, AdaptiveExperiment.TIME_BUDGETS)
+        # lambda sci: BoundedGCAIS(sci, 5000, 200, True, True, True)
+        # lambda sci: SEIP(sci, 2000)
+    ]
+
+    '''
         lambda sci: RandomSelector(sci, AdaptiveExperiment.TIME_BUDGETS),
         lambda sci: BoundedGCAIS(sci, 5000, 200, True, True),
         lambda sci: BoundedGCAIS(sci, 5000, 200, False, False),
         lambda sci: Simple_GSEMO(sci, 30, 200000),
-        lambda sci: Simple_GSEMO(sci, 1, 200000),
-        lambda sci: SEIP(sci, 2000)
-    ]
+        lambda sci: Simple_GSEMO(sci, 1, 200000)
+    '''
 
     def __init__(self, problem_instance, problem_name, iterations, mut_dict):
         self.original_problem_instance = problem_instance
