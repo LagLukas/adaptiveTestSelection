@@ -1,11 +1,7 @@
 try:
-    from source.population_initializer import PopulationCreator
-    from source.greedy import GreedyAlgorithm
     from source.set_cover import *
     from source.gcais_population import GCAISPopulation
 except Exception as _:
-    from population_initializer import PopulationCreator
-    from greedy import GreedyAlgorithm
     from set_cover import *
     from gcais_population import GCAISPopulation
 import numpy as np
